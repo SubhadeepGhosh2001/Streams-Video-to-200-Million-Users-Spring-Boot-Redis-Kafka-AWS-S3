@@ -71,6 +71,13 @@ public class ContentService {
         movieRepository.save(movie);
         log.info("Movie {} is ready with HLS URL: {}", movieId, hlsUrl);
     }
+    public void updateVideoStatus(String movieId,VideoStatus videoStatus){
+        Movie movie=movieRepository.findById(movieId)
+                .orElseThrow(()->new RuntimeException("Movie not found:"+movieId));
+        movie.setVideoStatus(videoStatus);
+        movieRepository.save(movie);
+
+    }
 
     private MovieResponse mapToMovieResponse(Movie movie) {
         MovieResponse response = new MovieResponse();

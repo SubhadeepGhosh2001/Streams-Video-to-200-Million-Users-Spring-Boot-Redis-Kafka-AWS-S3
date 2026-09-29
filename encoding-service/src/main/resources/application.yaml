@@ -3,40 +3,41 @@ spring:
     name: encoding-service
   kafka:
     bootstrap-servers: localhost:9092
+
     consumer:
       group-id: encoding-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
       properties:
-        spring:
-          json:
-            trusted:
-              packages: '*'
-              use:
-                type:
-                  headers: false
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        "[spring.json.trusted.packages]": "*"
+        "[spring.json.use.type.headers]": false
+        "[spring.json.value.default.type]": "com.netflix.encodingservice.event.VideoUploadedEvent"
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+
 
 server:
   port: 8083
 
 
 aws:
-  access-key: ${AWS_ACCESS_KEY:AKIAPX6NI0YH4LBELJB}
-  secret-key: ${AWS_SECRET_KEY:Yf0/DroCZRwrwjm0QUjnbIKQ3LPl4yZ6BzTBw7FG}
+  access-key: ${AWS_ACCESS_KEY}
+  secret-key: ${AWS_SECRET_KEY}
   region: ${AWS_REGION:ap-south-2}
 
   s3:
-    bucket-name: ${AWS_BUCKET_NAME:netflix-streaming-videos-515310961584-ap-south-2-an}
+    bucket-name: ${AWS_BUCKET_NAME}
 
 ffmpeg:
   path: /usr/bin/ffmpeg
 
 encoding:
   base-path: /tmp/encoding
+  temp-dir:${TEMP_DIR: /tmp/encoding}
 
 management:
   endpoints:

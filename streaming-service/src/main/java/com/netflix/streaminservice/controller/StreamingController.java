@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/stream")
+@CrossOrigin(origins = "http://localhost:5500")
 @Slf4j
 @RequiredArgsConstructor
 public class StreamingController {
@@ -20,7 +21,7 @@ public class StreamingController {
     private static final String MASTER_PLAYLIST_KEY_PREFIX = "streaming:playlist:";
 
     @GetMapping("/{movieId}")
-    public ResponseEntity<StreamingResponse> getStreamingUrl(String movieId) {
+    public ResponseEntity<StreamingResponse> getStreamingUrl(@PathVariable String movieId) {
         log.info("Received request to get streaming URL for movie: {}", movieId);
         String plalistKey = redisTemplate.opsForValue().get(MASTER_PLAYLIST_KEY_PREFIX + movieId);
         if (plalistKey == null) return ResponseEntity.notFound().build();

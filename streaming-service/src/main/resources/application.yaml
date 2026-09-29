@@ -25,12 +25,12 @@ server:
   port: 8084
 
 aws:
-  access-key: ${AWS_ACCESS_KEY:AKIAPX6NI0YH4LBELJB}
-  secret-key: ${AWS_SECRET_KEY:Yf0/DroCZRwrwjm0QUjnbIKQ3LPl4yZ6BzTBw7FG}
+  access-key: ${AWS_ACCESS_KEY}
+  secret-key: ${AWS_SECRET_KEY}
   region: ${AWS_REGION:ap-south-2}
 
   s3:
-    bucket-name: ${AWS_BUCKET_NAME:netflix-streaming-videos-515310961584-ap-south-2-an}
+    bucket-name: ${AWS_BUCKET_NAME}
     presigned-url-expiry: 60
 
 management:

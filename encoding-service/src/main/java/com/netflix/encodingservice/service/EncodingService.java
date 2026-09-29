@@ -60,34 +60,46 @@ try {
     String localVideoPath=jobPath+"/raw_video.mp4";
     // Download the video from S3 to local path
     downloadFromS3(event.getVideoKey(), localVideoPath);
-    for(int[] quality: VIDEO_QUALITIES){
-        int width=quality[0];
-        int bitrate=quality[1];
-        int height=quality[2];
+    for (int[] quality : VIDEO_QUALITIES) {
+        int width = quality[0];
+        int bitrate = quality[1];
+        int height = quality[2];
+
         String qualityDir = jobPath + "/encoded/" + height + "p";
         Files.createDirectories(Paths.get(qualityDir));
 
         encodeToHLS(localVideoPath, qualityDir, width, height, bitrate);
-        log.info("Encoded {}p successfully ", height);
 
-// Step 4: Generate master playlist
-        String masterPlaylistPath = jobPath + "/encoded/master.m3u8";
-        generateMasterPlaylist(masterPlaylistPath);
-
-        String encodedPrefix = "encoded/" + event.getMovieId() + "/";
-        uploadEncodedFilesToS3(jobPath + "/encoded", encodedPrefix);
-        String masterPlayListKey = encodedPrefix + "master.m3u8";
-        String hlsUrl = "https://" + bucketName + ".s3.amazonaws.com/" + masterPlayListKey;
-        // Publish an event to Kafka indicating that the video has been encoded
-        VideoEncodedEvent encodedEvent = new VideoEncodedEvent(
-                event.getMovieId(),
-                hlsUrl,
-                masterPlayListKey,
-                true,
-                null
-        );
-        kafkaTemplate.send(VIDEO_ENCODED_TOPIC,event.getMovieId(), encodedEvent);
+        log.info("Encoded {}p successfully", height);
     }
+
+// Generate master playlist AFTER all qualities are encoded
+    String masterPlaylistPath = jobPath + "/encoded/master.m3u8";
+    generateMasterPlaylist(masterPlaylistPath);
+
+// Upload everything ONCE
+    String encodedPrefix = "encoded/" + event.getMovieId();
+    uploadEncodedFilesToS3(jobPath + "/encoded", encodedPrefix);
+
+    String masterPlaylistKey = encodedPrefix + "/master.m3u8";
+
+    String hlsUrl =
+            "https://" + bucketName + ".s3.amazonaws.com/" + masterPlaylistKey;
+
+// Publish ONE event
+    VideoEncodedEvent encodedEvent = new VideoEncodedEvent(
+            event.getMovieId(),
+            hlsUrl,
+            masterPlaylistKey,
+            true,
+            null
+    );
+
+    kafkaTemplate.send(
+            VIDEO_ENCODED_TOPIC,
+            event.getMovieId(),
+            encodedEvent
+    );
 
 } catch (Exception e) {
             log.error("Error occurred while encoding video: {}", e.getMessage());
@@ -116,7 +128,7 @@ finally {
 
         // Implement the logic to encode the video to HLS format using FFmpeg
        String playlistPath = outputDir + "/playlist.m3u8";
-       String segmentPath = outputDir + "/segment_%03d.ts ";
+       String segmentPath = outputDir + "/segment_%03d.ts";
         List<String> commands = Arrays.asList(
                 ffmpegPath,
                 "-i", inputPath,  //Input file
@@ -133,6 +145,7 @@ finally {
         );
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.redirectErrorStream(true);
+        processBuilder.inheritIO();
         Process process = processBuilder.start();
         int exitCode = process.waitFor();
         if(exitCode != 0) {
@@ -175,7 +188,9 @@ finally {
             } else {
                 String relativrPath = file.getAbsolutePath().substring(baseDir.length() + 1).replace("\\", "/");
                 String s3Key = s3Prefix + "/" + relativrPath;
-                String contentType = file.getName().endsWith(".m3u8") ? "application/xmpegurl" : "video/mp2T";
+                String contentType = file.getName().endsWith(".m3u8")
+                        ? "application/vnd.apple.mpegurl"
+                        : "video/mp2t";
 
                 PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                         .bucket(bucketName)

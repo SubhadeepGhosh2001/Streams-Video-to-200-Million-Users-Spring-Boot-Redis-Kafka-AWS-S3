@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:mariadb://localhost:3306/content_db
-    username: content_user
-    password: content123
+    username: ${user}
+    password: ${password}
     driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
@@ -16,6 +16,20 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: content-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.HashMap
 
 server:
   port: 8080

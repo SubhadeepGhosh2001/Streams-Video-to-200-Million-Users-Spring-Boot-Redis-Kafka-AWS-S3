@@ -1,0 +1,24 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# Temporary encoding files
+/tmp/
+encoding/
